@@ -2,7 +2,7 @@
 #
 #   docker compose -f compose.yaml -f compose.prod.yaml up -d --build
 #
-# Put the production values in .env first (copy .env.example). Supabase itself is the managed service in production,
+# Put the production values in .env first (copy .env.prod.example). Supabase itself is the managed service in production,
 # so this runs only what the Edge Functions call: the inference service, behind Caddy for HTTPS, plus
 # Ollama for embeddings (COMPOSE_PROFILES=ollama in .env; leave it empty for another embeddings backend).
 services:

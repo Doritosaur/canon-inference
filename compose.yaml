@@ -16,7 +16,7 @@ services:
     # Values come from .env in this directory (Compose reads it automatically). Listed one by one so the
     # container does not also receive the R2 and LLM secrets that only the Edge Functions need.
     environment:
-      INFERENCE_API_KEY: ${INFERENCE_API_KEY:?set INFERENCE_API_KEY in .env (copy .env.example)}
+      INFERENCE_API_KEY: ${INFERENCE_API_KEY:?set INFERENCE_API_KEY in .env (copy .env.dev.example or .env.prod.example)}
       SARVAM_API_KEY: ${SARVAM_API_KEY:-}
       EMBED_BACKEND: ${EMBED_BACKEND:-ollama}
       EMBED_MAX_BATCH: ${EMBED_MAX_BATCH:-64}

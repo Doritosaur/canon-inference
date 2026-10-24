@@ -6,7 +6,7 @@ Functions call it with the `X-Inference-Key` header; only `/health` is open.
 ## Configure
 
 ```sh
-cp .env.example .env     # set INFERENCE_API_KEY (same value as in canonevent-backend/.env) and SARVAM_API_KEY
+cp .env.dev.example .env     # set INFERENCE_API_KEY (same value as in canonevent-backend/.env) and SARVAM_API_KEY
 ```
 
 ## Run locally
@@ -50,13 +50,14 @@ The Edge Functions run in Supabase's cloud, so this must be reachable over publi
 **Your own Docker host** (DNS for the domain pointing at it, ports 80 and 443 open):
 
 ```sh
-cp .env.example .env     # also set INFERENCE_DOMAIN and COMPOSE_PROFILES=ollama
+cp .env.prod.example .env    # set the keys, Cloudflare account/token and INFERENCE_DOMAIN
 docker compose -f compose.yaml -f compose.prod.yaml up -d --build
 curl https://<your domain>/health
 ```
 
-Runs the service (read-only filesystem, no capabilities, no published port), Ollama for embeddings, and Caddy for
-HTTPS, forwarding only `/embed`, `/transcribe` and `/health`. Update with `git pull` and the same command.
+Runs the service (read-only filesystem, no capabilities, no published port) and Caddy for HTTPS, forwarding only
+`/embed`, `/transcribe` and `/health`. Embeddings come from Cloudflare Workers AI (`@cf/baai/bge-m3`), so no Ollama
+container runs (`COMPOSE_PROFILES` stays empty). Update with `git pull` and the same command.
 
 **A managed container host** (Fly.io, Railway, Render, Cloud Run): deploy this directory's `Dockerfile`, set
 `EMBED_BACKEND=api` with `EMBED_API_*`, plus `INFERENCE_API_KEY` and `SARVAM_API_KEY` as the platform's env vars. HTTPS
@@ -67,7 +68,7 @@ Then set `INFERENCE_URL` (the public URL) and `INFERENCE_API_KEY` in the backend
 
 ## Embedding backends
 
-`EMBED_BACKEND`: `ollama` (default), `api` (hosted OpenAI-compatible `/embeddings`; clear `COMPOSE_PROFILES`), or
-`local` (in-process; set `INFERENCE_REQUIREMENTS=requirements-local.txt` and `INFERENCE_MEMORY=4g`). Vectors from
+`EMBED_BACKEND`: `ollama` (default, local dev), `api` (hosted OpenAI-compatible `/embeddings`; production uses
+Cloudflare Workers AI, see `.env.prod.example`; clear `COMPOSE_PROFILES`), or `local` (in-process; set `INFERENCE_REQUIREMENTS=requirements-local.txt` and `INFERENCE_MEMORY=4g`). Vectors from
 different backends differ slightly, so after switching, re-embed with `POST /memories/reprocess` (body
 `{"extract": false}`) on the backend.

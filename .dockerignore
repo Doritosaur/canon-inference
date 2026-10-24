@@ -3,6 +3,7 @@ __pycache__
 *.pyc
 .env
 .env.*
-!.env.example
+!.env.dev.example
+!.env.prod.example
 Dockerfile
 .dockerignore
