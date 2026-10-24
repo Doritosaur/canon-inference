@@ -1,0 +1,59 @@
+# Production overlay. Used explicitly, which also skips compose.override.yaml:
+#
+#   docker compose -f compose.yaml -f compose.prod.yaml up -d --build
+#
+# Put the production values in .env first (copy .env.example). Supabase itself is the managed service in production,
+# so this runs only what the Edge Functions call: the inference service, behind Caddy for HTTPS, plus
+# Ollama for embeddings (COMPOSE_PROFILES=ollama in .env; leave it empty for another embeddings backend).
+services:
+  inference:
+    restart: always
+    environment:
+      OLLAMA_URL: http://ollama:11434
+    # Not published: only Caddy, on the compose network, can reach it.
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          # Enough for the Ollama/API backends; EMBED_BACKEND=local (torch + bge-m3 in-process) needs about 4g.
+          memory: ${INFERENCE_MEMORY:-1g}
+    logging: &logging
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+  ollama:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: ${OLLAMA_MEMORY:-3g}
+    logging: *logging
+
+  caddy:
+    image: caddy:2
+    restart: always
+    depends_on:
+      inference:
+        condition: service_healthy
+    environment:
+      INFERENCE_DOMAIN: ${INFERENCE_DOMAIN:?set INFERENCE_DOMAIN in .env (the public hostname that points at this machine)}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificates live here: losing the volume means re-issuing them and can hit Let's Encrypt rate limits.
+      - caddy-data:/data
+      - caddy-config:/config
+    logging: *logging
+
+volumes:
+  caddy-data:
+  caddy-config:

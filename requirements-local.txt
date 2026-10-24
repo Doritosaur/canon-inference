@@ -1,0 +1,3 @@
+# Only for EMBED_BACKEND=local (pulls in torch, ~2 GB model download)
+-r requirements.txt
+sentence-transformers>=3.0

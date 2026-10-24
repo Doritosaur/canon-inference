@@ -1,0 +1,20 @@
+# HTTPS in front of the inference service (production). Caddy gets and renews the certificate itself;
+# the hostname must resolve to this machine, with ports 80 and 443 open.
+{$INFERENCE_DOMAIN} {
+	# Only what the Edge Functions call. The service still checks X-Inference-Key on all but /health.
+	@api path /embed /transcribe /transcribe/* /health
+
+	handle @api {
+		# Recordings go through /transcribe; the service caps them at 25 MB.
+		request_body {
+			max_size 30MB
+		}
+		reverse_proxy inference:8001
+	}
+
+	handle {
+		respond "Not found" 404
+	}
+
+	encode zstd gzip
+}

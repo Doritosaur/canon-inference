@@ -1,0 +1,17 @@
+# Local development. Docker Compose loads this on top of compose.yaml automatically, so plain
+# `docker compose up -d --build` is the local setup. (Production names its files explicitly and skips this one.)
+services:
+  inference:
+    ports:
+      # Loopback only. INFERENCE_PORT lets this run beside a natively started uvicorn on 8001.
+      - "127.0.0.1:${INFERENCE_PORT:-8001}:8001"
+    environment:
+      # Ollama running on the host (Docker Desktop resolves host.docker.internal). With the `ollama`
+      # profile, set OLLAMA_URL=http://ollama:11434 in your shell (scripts/dev.sh --ollama does).
+      OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  ollama:
+    ports:
+      - "127.0.0.1:11434:11434"
