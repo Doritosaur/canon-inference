@@ -5,6 +5,9 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
+    # Slow or flaky networks: default is a 15s read timeout and 5 retries.
+    PIP_DEFAULT_TIMEOUT=120 \
+    PIP_RETRIES=10 \
     # Where sentence-transformers keeps its model, so a volume can persist the ~2 GB download.
     HF_HOME=/models
 
