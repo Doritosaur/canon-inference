@@ -47,21 +47,22 @@ client retries.
 
 The Edge Functions run in Supabase's cloud, so this must be reachable over public HTTPS.
 
-**Your own Docker host** (DNS for the domain pointing at it, ports 80 and 443 open):
+**Your own Docker host** (a VM with Docker and `cloudflared`):
 
 ```sh
-cp .env.prod.example .env    # set the keys, Cloudflare account/token and INFERENCE_DOMAIN
+cp .env.prod.example .env    # set the keys and the Cloudflare account/token
 docker compose -f compose.yaml -f compose.prod.yaml up -d --build
-curl https://<your domain>/health
+curl http://127.0.0.1:8001/health
 ```
 
-Runs the service (read-only filesystem, no capabilities, no published port) and Caddy for HTTPS, forwarding only
-`/embed`, `/transcribe` and `/health`. Embeddings come from Cloudflare Workers AI (`@cf/baai/bge-m3`), so no Ollama
-container runs (`COMPOSE_PROFILES` stays empty). Update with `git pull` and the same command.
+Runs the service (read-only filesystem, no capabilities) published on `127.0.0.1:8001` only. Put a `cloudflared`
+tunnel (or any reverse proxy) in front for HTTPS: `cloudflared tunnel --url http://localhost:8001`. Embeddings come from
+Cloudflare Workers AI (`@cf/baai/bge-m3`), so no Ollama container runs (`COMPOSE_PROFILES` stays empty). Update with
+`git pull` and the same command.
 
 **A managed container host** (Fly.io, Railway, Render, Cloud Run): deploy this directory's `Dockerfile`, set
 `EMBED_BACKEND=api` with `EMBED_API_*`, plus `INFERENCE_API_KEY` and `SARVAM_API_KEY` as the platform's env vars. HTTPS
-comes with the platform, so skip Caddy and `compose.prod.yaml`.
+comes with the platform, so skip `compose.prod.yaml`.
 
 Then set `INFERENCE_URL` (the public URL) and `INFERENCE_API_KEY` in the backend's `.env.prod` and run
 `supabase secrets set --env-file .env.prod` there.
